@@ -4,7 +4,14 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="theme-color" content="#f5f5f7"/>
+<meta name="theme-color" content="#111827"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Finanças"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icon.png"/>
+<link rel="icon" type="image/png" href="icon.png"/>
 <title>Iago · App Financeiro</title>
 <style>
 :root{
@@ -273,7 +280,10 @@ textarea{resize:none;height:65px;font-size:14px}
 
 <div class="pg act" id="page-home">
   <div class="phd"><div><div class="ptitle">👋 Olá, Iago!</div><div class="psub" id="hDate"></div></div>
-    <button class="btn btn-ghost btn-sm" style="width:auto;padding:7px 12px;font-size:11px" onclick="lockApp()">🔒 Bloquear</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" style="width:auto;padding:7px 12px;font-size:11px" onclick="iniciarTrocaPin()">🔑 PIN</button>
+      <button class="btn btn-ghost btn-sm" style="width:auto;padding:7px 12px;font-size:11px" onclick="lockApp()">🔒 Bloquear</button>
+    </div>
   </div>
   <div class="hero">
     <div class="hlbl">Saldo Disponível</div>
@@ -282,7 +292,7 @@ textarea{resize:none;height:65px;font-size:14px}
       <div class="hbox"><div class="hblbl">Receitas</div><div class="hbval g" id="hRec">R$ 0,00</div></div>
       <div class="hbox"><div class="hblbl">Gastos</div><div class="hbval r" id="hGas">R$ 0,00</div></div>
       <div class="hbox"><div class="hblbl">Contas Fixas</div><div class="hbval r" id="hCon">R$ 0,00</div></div>
-      <div class="hbox"><div class="hblbl">Cofrinhos</div><div class="hbval p" id="hCof">R$ 0,00</div></div>
+      <div class="hbox"><div class="hblbl">Próximo Mês</div><div class="hbval r" id="hProx">R$ 0,00</div></div>
     </div>
   </div>
   <div class="dbanner">
@@ -572,7 +582,18 @@ async function enterApp(){
   if(!listening) startListening();
 }
 
-window.lockApp=function(){
+window.iniciarTrocaPin=function(){
+  lockApp();
+  setTimeout(()=>{
+    pinMode='setup';
+    pinFirst='';
+    pinInput='';
+    updPinDots();
+    document.getElementById('pinSub').textContent='Digite seu novo PIN de 4 dígitos';
+    document.getElementById('pinSetupInfo').textContent='Você precisará confirmar o novo PIN em seguida.';
+    document.getElementById('pinErr').classList.remove('show');
+  },100);
+}
   document.getElementById('pinScreen').classList.remove('hidden');
   document.getElementById('appContent').classList.remove('visible');
   pinInput='';pinMode='check';updPinDots();
@@ -689,7 +710,17 @@ function updHome(){
   document.getElementById('hRec').textContent=fmt(recMes);
   document.getElementById('hGas').textContent=fmt(gasMes);
   document.getElementById('hCon').textContent=fmt(conMes);
-  document.getElementById('hCof').textContent=fmt(totalCof);
+  // Próximo mês
+  const {y:py, m:pm} = addMonths(ano, mes, 1);
+  const mvProx = mvStr(py, pm);
+  const contasProx = D.contas.filter(c=>contaAtivaNoMV(c,mvProx)).reduce((a,c)=>a+c.valor,0);
+  const creditoProx = D.gastos.filter(g=>{
+    if(!g.parcGrupo && g.tipo!=='cred') return false;
+    const [gy,gm] = g.data.split('-');
+    return parseInt(gy)===py && parseInt(gm)-1===pm;
+  }).reduce((a,g)=>a+g.valor,0);
+  const totalProx = contasProx + creditoProx;
+  document.getElementById('hProx').textContent = fmt(totalProx);
   document.getElementById('hHoje').textContent=fmt(gasHj);
   const pct=lim>0?Math.min(gasHj/lim*100,100):0;
   document.getElementById('limPct').textContent=Math.round(pct)+'%';
