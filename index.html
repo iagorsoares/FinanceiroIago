@@ -4,14 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="theme-color" content="#111827"/>
-<meta name="mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<meta name="apple-mobile-web-app-title" content="Finanças"/>
-<link rel="manifest" href="manifest.json"/>
-<link rel="apple-touch-icon" href="icon.png"/>
-<link rel="icon" type="image/png" href="icon.png"/>
+<meta name="theme-color" content="#f5f5f7"/>
 <title>Iago · App Financeiro</title>
 <style>
 :root{
@@ -246,19 +239,19 @@ textarea{resize:none;height:65px;font-size:14px}
     <div class="pin-dot" id="d2"></div>
     <div class="pin-dot" id="d3"></div>
   </div>
-  <div class="pin-pad" id="pinPad">
-    <div class="pin-btn" data-n="1">1</div>
-    <div class="pin-btn" data-n="2">2</div>
-    <div class="pin-btn" data-n="3">3</div>
-    <div class="pin-btn" data-n="4">4</div>
-    <div class="pin-btn" data-n="5">5</div>
-    <div class="pin-btn" data-n="6">6</div>
-    <div class="pin-btn" data-n="7">7</div>
-    <div class="pin-btn" data-n="8">8</div>
-    <div class="pin-btn" data-n="9">9</div>
+  <div class="pin-pad">
+    <div class="pin-btn" onclick="pinPress('1')">1</div>
+    <div class="pin-btn" onclick="pinPress('2')">2</div>
+    <div class="pin-btn" onclick="pinPress('3')">3</div>
+    <div class="pin-btn" onclick="pinPress('4')">4</div>
+    <div class="pin-btn" onclick="pinPress('5')">5</div>
+    <div class="pin-btn" onclick="pinPress('6')">6</div>
+    <div class="pin-btn" onclick="pinPress('7')">7</div>
+    <div class="pin-btn" onclick="pinPress('8')">8</div>
+    <div class="pin-btn" onclick="pinPress('9')">9</div>
     <div class="pin-btn empty"></div>
-    <div class="pin-btn" data-n="0">0</div>
-    <div class="pin-btn del" data-n="del">⌫</div>
+    <div class="pin-btn" onclick="pinPress('0')">0</div>
+    <div class="pin-btn del" onclick="pinDel()">⌫</div>
   </div>
   <div class="pin-error" id="pinErr">PIN incorreto. Tente novamente.</div>
   <div class="pin-setup-info" id="pinSetupInfo"></div>
@@ -280,10 +273,7 @@ textarea{resize:none;height:65px;font-size:14px}
 
 <div class="pg act" id="page-home">
   <div class="phd"><div><div class="ptitle">👋 Olá, Iago!</div><div class="psub" id="hDate"></div></div>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-ghost btn-sm" style="width:auto;padding:7px 12px;font-size:11px" onclick="iniciarTrocaPin()">🔑 PIN</button>
-      <button class="btn btn-ghost btn-sm" style="width:auto;padding:7px 12px;font-size:11px" onclick="lockApp()">🔒 Bloquear</button>
-    </div>
+    <button class="btn btn-ghost btn-sm" style="width:auto;padding:7px 12px;font-size:11px" onclick="lockApp()">🔒 Bloquear</button>
   </div>
   <div class="hero">
     <div class="hlbl">Saldo Disponível</div>
@@ -499,105 +489,38 @@ let listening=false;
 
 // ── PIN SYSTEM ──
 async function initPin(){
-  // Verifica localStorage primeiro (mais rápido)
-  const pinLocal = localStorage.getItem('fx_pin');
-  if(pinLocal){
-    pinMode='check';
-    document.getElementById('pinSub').textContent='Digite seu PIN para entrar';
-    document.getElementById('pinSetupInfo').textContent='';
-    return;
-  }
-  // Sem PIN local, verifica Firebase
   try{
     const snap=await getDoc(doc(db,PIN_DOC,'data'));
     if(snap.exists()&&snap.data().pin){
-      // PIN existe no Firebase, salva local e pede para digitar
-      localStorage.setItem('fx_pin', snap.data().pin);
       pinMode='check';
       document.getElementById('pinSub').textContent='Digite seu PIN para entrar';
       document.getElementById('pinSetupInfo').textContent='';
     } else {
       pinMode='setup';
       document.getElementById('pinSub').textContent='Crie um PIN de 4 dígitos';
-      document.getElementById('pinSetupInfo').textContent='Este PIN protege seu app em todos os dispositivos.';
+      document.getElementById('pinSetupInfo').textContent='Este PIN protege seu app.\nVocê precisará dele em todos os dispositivos.';
     }
   } catch(e){
     pinMode='setup';
     document.getElementById('pinSub').textContent='Crie um PIN de 4 dígitos';
-    document.getElementById('pinSetupInfo').textContent='';
   }
 }
 
-// ── PIN EVENTOS (fora do module para funcionar no Android) ──
-document.addEventListener('DOMContentLoaded', function(){
-  document.getElementById('pinPad').addEventListener('click', function(e){
-    const btn = e.target.closest('.pin-btn');
-    if(!btn) return;
-    const n = btn.getAttribute('data-n');
-    if(!n) return;
-    if(n === 'del'){
-      pinInput = pinInput.slice(0,-1);
-      updPinDots();
-      document.getElementById('pinErr').classList.remove('show');
-    } else {
-      if(pinInput.length >= 4) return;
-      pinInput += n;
-      updPinDots();
-      if(pinInput.length === 4) setTimeout(checkPin, 200);
-    }
-  });
-});
+window.pinPress=function(d){
+  if(pinInput.length>=4)return;
+  pinInput+=d;
+  updPinDots();
+  if(pinInput.length===4) setTimeout(checkPin,150);
+}
+window.pinDel=function(){
+  pinInput=pinInput.slice(0,-1);
+  updPinDots();
+  document.getElementById('pinErr').classList.remove('show');
+}
 
 function updPinDots(){
   for(let i=0;i<4;i++){
-    document.getElementById('d'+i).classList.toggle('filled', i<pinInput.length);
-  }
-}
-
-async function checkPin(){
-  if(pinMode==='setup'){
-    pinFirst=pinInput;
-    pinInput='';
-    updPinDots();
-    pinMode='confirm';
-    document.getElementById('pinSub').textContent='Confirme seu PIN';
-    document.getElementById('pinSetupInfo').textContent='Digite o mesmo PIN novamente';
-    return;
-  }
-
-  if(pinMode==='confirm'){
-    if(pinInput===pinFirst){
-      localStorage.setItem('fx_pin', pinInput);
-      try{ await setDoc(doc(db,PIN_DOC,'data'),{pin:pinInput}); }catch(e){}
-      enterApp();
-    } else {
-      document.getElementById('pinErr').textContent='PINs não coincidem. Tente novamente.';
-      document.getElementById('pinErr').classList.add('show');
-      pinInput='';pinFirst='';pinMode='setup';
-      updPinDots();
-      document.getElementById('pinSub').textContent='Crie um PIN de 4 dígitos';
-      document.getElementById('pinSetupInfo').textContent='';
-    }
-    return;
-  }
-
-  // MODO CHECK — compara com localStorage
-  const pinSalvo = localStorage.getItem('fx_pin');
-  if(pinSalvo){
-    if(pinInput===pinSalvo){
-      enterApp();
-    } else {
-      document.getElementById('pinErr').textContent='PIN incorreto. Tente novamente.';
-      document.getElementById('pinErr').classList.add('show');
-      pinInput='';
-      updPinDots();
-    }
-  } else {
-    // sem PIN salvo, pede para criar
-    pinMode='setup';
-    pinInput='';
-    updPinDots();
-    document.getElementById('pinSub').textContent='Crie um PIN de 4 dígitos';
+    document.getElementById('d'+i).classList.toggle('filled',i<pinInput.length);
   }
 }
 
@@ -613,16 +536,9 @@ async function checkPin(){
   }
   if(pinMode==='confirm'){
     if(pinInput===pinFirst){
-      try{
-        await setDoc(doc(db,PIN_DOC,'data'),{pin:pinInput});
-        // salva também local como backup
-        localStorage.setItem('fx_pin', pinInput);
-        enterApp();
-      } catch(e){
-        // salva só local se Firebase falhar
-        localStorage.setItem('fx_pin', pinInput);
-        enterApp();
-      }
+      // salva PIN no Firebase
+      await setDoc(doc(db,PIN_DOC,'data'),{pin:pinInput});
+      enterApp();
     } else {
       document.getElementById('pinErr').textContent='PINs não coincidem. Tente novamente.';
       document.getElementById('pinErr').classList.add('show');
@@ -633,54 +549,19 @@ async function checkPin(){
     }
     return;
   }
-  // check mode — tenta Firebase primeiro, fallback no localStorage
+  // check mode
   try{
     const snap=await getDoc(doc(db,PIN_DOC,'data'));
-    if(snap.exists()&&snap.data().pin){
-      const pinCorreto=snap.data().pin;
-      // atualiza cache local
-      localStorage.setItem('fx_pin', pinCorreto);
-      if(pinInput===pinCorreto){
-        enterApp();
-      } else {
-        document.getElementById('pinErr').classList.add('show');
-        pinInput='';updPinDots();
-      }
+    if(snap.exists()&&snap.data().pin===pinInput){
+      enterApp();
     } else {
-      // sem PIN no Firebase, verifica local
-      const pinLocal=localStorage.getItem('fx_pin');
-      if(pinLocal){
-        if(pinInput===pinLocal){
-          // sincroniza com Firebase
-          await setDoc(doc(db,PIN_DOC,'data'),{pin:pinLocal});
-          enterApp();
-        } else {
-          document.getElementById('pinErr').classList.add('show');
-          pinInput='';updPinDots();
-        }
-      } else {
-        // sem PIN em lugar nenhum, pede para criar
-        pinMode='setup';
-        pinInput='';updPinDots();
-        document.getElementById('pinSub').textContent='Crie um PIN de 4 dígitos';
-      }
-    }
-  } catch(e){
-    // Firebase falhou — usa localStorage
-    const pinLocal=localStorage.getItem('fx_pin');
-    if(pinLocal){
-      if(pinInput===pinLocal){
-        enterApp();
-      } else {
-        document.getElementById('pinErr').textContent='PIN incorreto.';
-        document.getElementById('pinErr').classList.add('show');
-        pinInput='';updPinDots();
-      }
-    } else {
-      document.getElementById('pinErr').textContent='Sem conexão. Tente novamente.';
       document.getElementById('pinErr').classList.add('show');
       pinInput='';updPinDots();
     }
+  } catch(e){
+    document.getElementById('pinErr').textContent='Erro de conexão. Verifique a internet.';
+    document.getElementById('pinErr').classList.add('show');
+    pinInput='';updPinDots();
   }
 }
 
@@ -691,18 +572,7 @@ async function enterApp(){
   if(!listening) startListening();
 }
 
-window.iniciarTrocaPin=function(){
-  lockApp();
-  setTimeout(()=>{
-    pinMode='setup';
-    pinFirst='';
-    pinInput='';
-    updPinDots();
-    document.getElementById('pinSub').textContent='Digite seu novo PIN de 4 dígitos';
-    document.getElementById('pinSetupInfo').textContent='Você precisará confirmar o novo PIN em seguida.';
-    document.getElementById('pinErr').classList.remove('show');
-  },100);
-}
+window.lockApp=function(){
   document.getElementById('pinScreen').classList.remove('hidden');
   document.getElementById('appContent').classList.remove('visible');
   pinInput='';pinMode='check';updPinDots();
