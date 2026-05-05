@@ -273,10 +273,7 @@ textarea{resize:none;height:65px;font-size:14px}
 
 <div class="pg act" id="page-home">
   <div class="phd"><div><div class="ptitle">👋 Olá, Iago!</div><div class="psub" id="hDate"></div></div>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-ghost btn-sm" style="width:auto;padding:7px 12px;font-size:11px" onclick="iniciarTrocaPin()">🔑 PIN</button>
-      <button class="btn btn-ghost btn-sm" style="width:auto;padding:7px 12px;font-size:11px" onclick="lockApp()">🔒 Bloquear</button>
-    </div>
+    <button class="btn btn-ghost btn-sm" style="width:auto;padding:7px 12px;font-size:11px" onclick="lockApp()">🔒 Bloquear</button>
   </div>
   <div class="hero">
     <div class="hlbl">Saldo Disponível</div>
@@ -575,18 +572,7 @@ async function enterApp(){
   if(!listening) startListening();
 }
 
-window.iniciarTrocaPin=function(){
-  lockApp();
-  setTimeout(()=>{
-    pinMode='setup';
-    pinFirst='';
-    pinInput='';
-    updPinDots();
-    document.getElementById('pinSub').textContent='Digite seu novo PIN de 4 dígitos';
-    document.getElementById('pinSetupInfo').textContent='Você precisará confirmar o novo PIN em seguida.';
-    document.getElementById('pinErr').classList.remove('show');
-  },100);
-}
+window.lockApp=function(){
   document.getElementById('pinScreen').classList.remove('hidden');
   document.getElementById('appContent').classList.remove('visible');
   pinInput='';pinMode='check';updPinDots();
