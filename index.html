@@ -246,19 +246,19 @@ textarea{resize:none;height:65px;font-size:14px}
     <div class="pin-dot" id="d2"></div>
     <div class="pin-dot" id="d3"></div>
   </div>
-  <div class="pin-pad">
-    <div class="pin-btn" onclick="pinPress('1')">1</div>
-    <div class="pin-btn" onclick="pinPress('2')">2</div>
-    <div class="pin-btn" onclick="pinPress('3')">3</div>
-    <div class="pin-btn" onclick="pinPress('4')">4</div>
-    <div class="pin-btn" onclick="pinPress('5')">5</div>
-    <div class="pin-btn" onclick="pinPress('6')">6</div>
-    <div class="pin-btn" onclick="pinPress('7')">7</div>
-    <div class="pin-btn" onclick="pinPress('8')">8</div>
-    <div class="pin-btn" onclick="pinPress('9')">9</div>
+  <div class="pin-pad" id="pinPad">
+    <div class="pin-btn" data-n="1">1</div>
+    <div class="pin-btn" data-n="2">2</div>
+    <div class="pin-btn" data-n="3">3</div>
+    <div class="pin-btn" data-n="4">4</div>
+    <div class="pin-btn" data-n="5">5</div>
+    <div class="pin-btn" data-n="6">6</div>
+    <div class="pin-btn" data-n="7">7</div>
+    <div class="pin-btn" data-n="8">8</div>
+    <div class="pin-btn" data-n="9">9</div>
     <div class="pin-btn empty"></div>
-    <div class="pin-btn" onclick="pinPress('0')">0</div>
-    <div class="pin-btn del" onclick="pinDel()">⌫</div>
+    <div class="pin-btn" data-n="0">0</div>
+    <div class="pin-btn del" data-n="del">⌫</div>
   </div>
   <div class="pin-error" id="pinErr">PIN incorreto. Tente novamente.</div>
   <div class="pin-setup-info" id="pinSetupInfo"></div>
@@ -528,18 +528,25 @@ async function initPin(){
   }
 }
 
-window.pinPress=function(d){
-  if(pinInput.length>=4) return;
-  pinInput+=d;
-  updPinDots();
-  if(pinInput.length===4) setTimeout(checkPin,200);
-}
-
-window.pinDel=function(){
-  pinInput=pinInput.slice(0,-1);
-  updPinDots();
-  document.getElementById('pinErr').classList.remove('show');
-}
+// ── PIN EVENTOS (fora do module para funcionar no Android) ──
+document.addEventListener('DOMContentLoaded', function(){
+  document.getElementById('pinPad').addEventListener('click', function(e){
+    const btn = e.target.closest('.pin-btn');
+    if(!btn) return;
+    const n = btn.getAttribute('data-n');
+    if(!n) return;
+    if(n === 'del'){
+      pinInput = pinInput.slice(0,-1);
+      updPinDots();
+      document.getElementById('pinErr').classList.remove('show');
+    } else {
+      if(pinInput.length >= 4) return;
+      pinInput += n;
+      updPinDots();
+      if(pinInput.length === 4) setTimeout(checkPin, 200);
+    }
+  });
+});
 
 function updPinDots(){
   for(let i=0;i<4;i++){
