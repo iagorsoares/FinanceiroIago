@@ -3,9 +3,30 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+
+<!-- ═══════════════════════════════════════════════
+     PWA / TELA INICIAL ANDROID & IOS
+     ═══════════════════════════════════════════════ -->
+<!-- Nome e descrição do app -->
+<meta name="application-name" content="Iago Finanças"/>
+<meta name="description" content="App financeiro pessoal do Iago"/>
+
+<!-- Cor da barra de status do Android (verde escuro) -->
+<meta name="theme-color" content="#00b96b"/>
+
+<!-- iOS: adicionar à tela inicial -->
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="theme-color" content="#f5f5f7"/>
-<title>Iago · App Financeiro</title>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Iago · $"/>
+
+<!-- ícone iOS (SVG inline convertido para PNG via canvas — ver script no final) -->
+<link rel="apple-touch-icon" id="appleTouchIcon"/>
+
+<!-- Manifest PWA (gerado inline via JS para não precisar de arquivo externo) -->
+<link rel="manifest" id="pwaManifest"/>
+
+<title>Iago · Finanças</title>
+
 <style>
 :root{
   --bg:#f5f5f7;--card:#fff;--brd:#ebebeb;--brd2:#e0e0e0;
@@ -25,8 +46,8 @@ input,button,select,textarea{font-family:inherit}
 /* ── PIN SCREEN ── */
 #pinScreen{position:fixed;inset:0;background:linear-gradient(145deg,#111827,#1e293b,#0f2027);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;padding:24px}
 #pinScreen.hidden{display:none}
-.pin-logo{font-size:48px;margin-bottom:12px}
-.pin-title{font-size:24px;font-weight:800;color:#fff;margin-bottom:4px;letter-spacing:-.5px}
+.pin-logo{font-size:72px;margin-bottom:8px;filter:drop-shadow(0 4px 16px rgba(0,185,107,.4))}
+.pin-title{font-size:26px;font-weight:800;color:#fff;margin-bottom:3px;letter-spacing:-.5px}
 .pin-sub{font-size:13px;color:rgba(255,255,255,.45);margin-bottom:40px;font-weight:500}
 .pin-dots{display:flex;gap:14px;margin-bottom:32px}
 .pin-dot{width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.2);transition:all .2s}
@@ -188,7 +209,7 @@ textarea{resize:none;height:65px;font-size:14px}
 .btn-sm{padding:8px 13px;font-size:12px;border-radius:var(--rsm)}
 
 .chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:6px}
-.chip{padding:7px 12px;border-radius:99px;font-size:12px;font-weight:700;border:1.5px solid var(--brd);background:var(--bg);color:var(--txt2);cursor:pointer;transition:all .15s}
+.chip{padding:7px 12px;border-radius:99px;font-size:12px;font-weight:700;border:1.5px solid var(--brd);background:var(--bg);color:var(--txt2);cursor:pointer;transition:all .15px}
 .chip.sel{border-color:var(--selclr,var(--grn));color:var(--selclr,var(--grn));background:var(--selbg,var(--gnbg))}
 
 .trow{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--brd)}
@@ -224,6 +245,16 @@ textarea{resize:none;height:65px;font-size:14px}
 .toast.show{transform:translateX(-50%) translateY(0)}
 .toast.tg{background:var(--grn)}.toast.tr{background:var(--red)}.toast.tp{background:var(--pur)}
 .hint{font-size:11px;color:var(--txt3);font-weight:500;padding:8px 11px;background:var(--abg);border-radius:9px;border:1px solid var(--abrd);margin-bottom:13px}
+
+/* ── BANNER INSTALAR APP ── */
+#installBanner{display:none;align-items:center;gap:10px;background:linear-gradient(135deg,#111827,#1e3a2f);border-radius:14px;padding:14px 16px;margin:0 14px 12px;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+#installBanner.show{display:flex}
+.ib-icon{font-size:32px;flex-shrink:0}
+.ib-text{flex:1}
+.ib-t{font-size:13px;font-weight:800;color:#fff;margin-bottom:2px}
+.ib-s{font-size:11px;color:rgba(255,255,255,.5);font-weight:500}
+.ib-btn{background:var(--grn);color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:800;cursor:pointer;flex-shrink:0}
+.ib-close{background:none;border:none;color:rgba(255,255,255,.4);font-size:18px;cursor:pointer;padding:2px 4px;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -262,6 +293,18 @@ textarea{resize:none;height:65px;font-size:14px}
 
 <!-- APP -->
 <div id="appContent">
+
+<!-- Banner instalar como app -->
+<div id="installBanner">
+  <div class="ib-icon">💰</div>
+  <div class="ib-text">
+    <div class="ib-t">Instalar na tela inicial</div>
+    <div class="ib-s">Acesso rápido sem abrir o navegador</div>
+  </div>
+  <button class="ib-btn" id="installBtn">Instalar</button>
+  <button class="ib-close" onclick="document.getElementById('installBanner').classList.remove('show')">×</button>
+</div>
+
 <nav class="nav">
   <div class="nitem act" onclick="goPage('home',this)"><div class="nicon">🏠</div><div class="nlbl">Início</div></div>
   <div class="nitem" onclick="goPage('gastos',this)"><div class="nicon">💸</div><div class="nlbl">Gastos</div></div>
@@ -453,6 +496,105 @@ textarea{resize:none;height:65px;font-size:14px}
 
 <div class="toast" id="toast"></div>
 
+<!-- ═══════════════════════════════════════════════
+     PWA MANIFEST + ÍCONE (gerado via Canvas, sem arquivo externo)
+     ═══════════════════════════════════════════════ -->
+<script>
+// Gera o ícone do app via Canvas (emoji 💰 sobre fundo verde escuro)
+function gerarIconePWA(size){
+  const canvas=document.createElement('canvas');
+  canvas.width=size;canvas.height=size;
+  const ctx=canvas.getContext('2d');
+  // Fundo gradiente verde escuro
+  const grad=ctx.createLinearGradient(0,0,size,size);
+  grad.addColorStop(0,'#111827');
+  grad.addColorStop(0.5,'#1e293b');
+  grad.addColorStop(1,'#0f2027');
+  // Bordas arredondadas
+  const r=size*0.22;
+  ctx.beginPath();
+  ctx.moveTo(r,0);ctx.lineTo(size-r,0);ctx.quadraticCurveTo(size,0,size,r);
+  ctx.lineTo(size,size-r);ctx.quadraticCurveTo(size,size,size-r,size);
+  ctx.lineTo(r,size);ctx.quadraticCurveTo(0,size,0,size-r);
+  ctx.lineTo(0,r);ctx.quadraticCurveTo(0,0,r,0);
+  ctx.closePath();ctx.fillStyle=grad;ctx.fill();
+  // Brilho verde sutil no canto superior direito
+  const glow=ctx.createRadialGradient(size*0.75,size*0.25,0,size*0.75,size*0.25,size*0.5);
+  glow.addColorStop(0,'rgba(0,185,107,0.3)');glow.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.beginPath();
+  ctx.moveTo(r,0);ctx.lineTo(size-r,0);ctx.quadraticCurveTo(size,0,size,r);
+  ctx.lineTo(size,size-r);ctx.quadraticCurveTo(size,size,size-r,size);
+  ctx.lineTo(r,size);ctx.quadraticCurveTo(0,size,0,size-r);
+  ctx.lineTo(0,r);ctx.quadraticCurveTo(0,0,r,0);
+  ctx.closePath();ctx.fillStyle=glow;ctx.fill();
+  // Emoji 💰
+  ctx.font=`bold ${size*0.52}px serif`;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('💰',size/2,size/2+size*0.02);
+  // Letras "IF" pequenas embaixo para identificação
+  if(size>=96){
+    ctx.font=`bold ${size*0.13}px -apple-system,sans-serif`;
+    ctx.fillStyle='rgba(0,185,107,0.9)';
+    ctx.letterSpacing='2px';
+    ctx.fillText('FINANÇAS',size/2,size*0.82);
+  }
+  return canvas.toDataURL('image/png');
+}
+
+function setupPWA(){
+  const icon192=gerarIconePWA(192);
+  const icon512=gerarIconePWA(512);
+  const icon180=gerarIconePWA(180);
+
+  // Apple touch icon
+  const appleLink=document.getElementById('appleTouchIcon');
+  appleLink.href=icon180;
+
+  // Manifest PWA inline
+  const manifest={
+    name:'Iago · Finanças',
+    short_name:'Iago $',
+    description:'App financeiro pessoal',
+    start_url:window.location.href,
+    display:'standalone',
+    background_color:'#111827',
+    theme_color:'#00b96b',
+    orientation:'portrait',
+    icons:[
+      {src:icon192,sizes:'192x192',type:'image/png',purpose:'any maskable'},
+      {src:icon512,sizes:'512x512',type:'image/png',purpose:'any maskable'}
+    ]
+  };
+  const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  document.getElementById('pwaManifest').href=url;
+
+  // Favicon dinâmico
+  let fav=document.querySelector("link[rel='icon']");
+  if(!fav){fav=document.createElement('link');fav.rel='icon';document.head.appendChild(fav)}
+  fav.href=gerarIconePWA(64);
+}
+
+// Prompt de instalação Android (Chrome)
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',(e)=>{
+  e.preventDefault();deferredPrompt=e;
+  document.getElementById('installBanner').classList.add('show');
+});
+document.getElementById('installBtn').addEventListener('click',async()=>{
+  if(!deferredPrompt)return;
+  deferredPrompt.prompt();
+  const{outcome}=await deferredPrompt.userChoice;
+  deferredPrompt=null;
+  document.getElementById('installBanner').classList.remove('show');
+});
+window.addEventListener('appinstalled',()=>{
+  document.getElementById('installBanner').classList.remove('show');
+});
+
+setupPWA();
+</script>
+
 <!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
@@ -483,7 +625,7 @@ let D={gastos:[],receitas:[],contas:[],parcelas:[],cofrinhos:[],config:{limite:1
 let selCat='alim',selCofEmoji='🐷',ativoCofId=null,editContaId=null,editCofId=null,pagTipo='deb',selParcN=1,calAno=new Date().getFullYear(),calMes=new Date().getMonth(),pgAtual='home';
 let saveTimer=null;
 let pinInput='';
-let pinMode='check'; // 'check' | 'setup' | 'confirm'
+let pinMode='check';
 let pinFirst='';
 let listening=false;
 
@@ -536,7 +678,6 @@ async function checkPin(){
   }
   if(pinMode==='confirm'){
     if(pinInput===pinFirst){
-      // salva PIN no Firebase
       await setDoc(doc(db,PIN_DOC,'data'),{pin:pinInput});
       enterApp();
     } else {
@@ -549,7 +690,6 @@ async function checkPin(){
     }
     return;
   }
-  // check mode
   try{
     const snap=await getDoc(doc(db,PIN_DOC,'data'));
     if(snap.exists()&&snap.data().pin===pinInput){
@@ -689,7 +829,6 @@ function updHome(){
   document.getElementById('hRec').textContent=fmt(recMes);
   document.getElementById('hGas').textContent=fmt(gasMes);
   document.getElementById('hCon').textContent=fmt(conMes);
-  // Próximo mês
   const {y:py, m:pm} = addMonths(ano, mes, 1);
   const mvProx = mvStr(py, pm);
   const contasProx = D.contas.filter(c=>contaAtivaNoMV(c,mvProx)).reduce((a,c)=>a+c.valor,0);
