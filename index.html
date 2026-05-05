@@ -546,9 +546,16 @@ async function checkPin(){
   }
   if(pinMode==='confirm'){
     if(pinInput===pinFirst){
-      // salva PIN no Firebase
-      await setDoc(doc(db,PIN_DOC,'data'),{pin:pinInput});
-      enterApp();
+      try{
+        await setDoc(doc(db,PIN_DOC,'data'),{pin:pinInput});
+        // salva também local como backup
+        localStorage.setItem('fx_pin', pinInput);
+        enterApp();
+      } catch(e){
+        // salva só local se Firebase falhar
+        localStorage.setItem('fx_pin', pinInput);
+        enterApp();
+      }
     } else {
       document.getElementById('pinErr').textContent='PINs não coincidem. Tente novamente.';
       document.getElementById('pinErr').classList.add('show');
@@ -559,19 +566,54 @@ async function checkPin(){
     }
     return;
   }
-  // check mode
+  // check mode — tenta Firebase primeiro, fallback no localStorage
   try{
     const snap=await getDoc(doc(db,PIN_DOC,'data'));
-    if(snap.exists()&&snap.data().pin===pinInput){
-      enterApp();
+    if(snap.exists()&&snap.data().pin){
+      const pinCorreto=snap.data().pin;
+      // atualiza cache local
+      localStorage.setItem('fx_pin', pinCorreto);
+      if(pinInput===pinCorreto){
+        enterApp();
+      } else {
+        document.getElementById('pinErr').classList.add('show');
+        pinInput='';updPinDots();
+      }
     } else {
+      // sem PIN no Firebase, verifica local
+      const pinLocal=localStorage.getItem('fx_pin');
+      if(pinLocal){
+        if(pinInput===pinLocal){
+          // sincroniza com Firebase
+          await setDoc(doc(db,PIN_DOC,'data'),{pin:pinLocal});
+          enterApp();
+        } else {
+          document.getElementById('pinErr').classList.add('show');
+          pinInput='';updPinDots();
+        }
+      } else {
+        // sem PIN em lugar nenhum, pede para criar
+        pinMode='setup';
+        pinInput='';updPinDots();
+        document.getElementById('pinSub').textContent='Crie um PIN de 4 dígitos';
+      }
+    }
+  } catch(e){
+    // Firebase falhou — usa localStorage
+    const pinLocal=localStorage.getItem('fx_pin');
+    if(pinLocal){
+      if(pinInput===pinLocal){
+        enterApp();
+      } else {
+        document.getElementById('pinErr').textContent='PIN incorreto.';
+        document.getElementById('pinErr').classList.add('show');
+        pinInput='';updPinDots();
+      }
+    } else {
+      document.getElementById('pinErr').textContent='Sem conexão. Tente novamente.';
       document.getElementById('pinErr').classList.add('show');
       pinInput='';updPinDots();
     }
-  } catch(e){
-    document.getElementById('pinErr').textContent='Erro de conexão. Verifique a internet.';
-    document.getElementById('pinErr').classList.add('show');
-    pinInput='';updPinDots();
   }
 }
 
